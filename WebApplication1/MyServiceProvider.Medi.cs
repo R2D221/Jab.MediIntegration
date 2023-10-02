@@ -161,7 +161,7 @@ namespace WebApplication1
 			}
 		}
 
-		class Wrapper : IServiceProvider, IServiceScopeFactory, IMyServiceProviderWrapper
+		class Wrapper : IServiceProvider, IServiceScopeFactory, IMyServiceProviderWrapper, IDisposable, IAsyncDisposable
 		{
 			private readonly MyServiceProvider myServiceProvider;
 			private readonly ConcurrentDictionary<ServiceDescriptor, Lazy<object?>> singletons = new();
@@ -280,6 +280,16 @@ namespace WebApplication1
 			{
 				var scope = myServiceProvider.CreateScope();
 				return ((IMyServiceProviderScope)scope).ScopeWrapper;
+			}
+
+			void IDisposable.Dispose()
+			{
+				myServiceProvider.Dispose();
+			}
+
+			ValueTask IAsyncDisposable.DisposeAsync()
+			{
+				return myServiceProvider.DisposeAsync();
 			}
 		}
 
