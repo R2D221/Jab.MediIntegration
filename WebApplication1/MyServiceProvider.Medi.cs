@@ -229,7 +229,7 @@ namespace WebApplication1
 				return null;
 			}
 
-			private object? GetMediService(ServiceDescriptor descriptor, Type[]? typeArguments = null)
+			public object? GetMediService(ServiceDescriptor descriptor, Type[]? typeArguments = null)
 			{
 				switch (descriptor.Lifetime)
 				{
@@ -262,7 +262,7 @@ namespace WebApplication1
 
 				case ServiceLifetime.Scoped:
 				{
-					return null;
+					return ((IMyServiceProviderScope)myServiceProvider.GetRootScope()).ScopeWrapper.GetMediService(descriptor, typeArguments);
 				}
 
 				case ServiceLifetime.Transient:
@@ -343,11 +343,6 @@ namespace WebApplication1
 					return jabService;
 				}
 
-				if (((IServiceProvider)wrapper).GetService(serviceType) is {/*notnull*/} rootService)
-				{
-					return rootService;
-				}
-
 				return GetMediService(serviceType);
 			}
 
@@ -386,13 +381,13 @@ namespace WebApplication1
 				return null;
 			}
 
-			private object? GetMediService(ServiceDescriptor descriptor, Type[]? typeArguments = null)
+			public object? GetMediService(ServiceDescriptor descriptor, Type[]? typeArguments = null)
 			{
 				switch (descriptor.Lifetime)
 				{
 				case ServiceLifetime.Singleton:
 				{
-					return null;
+					return wrapper.GetMediService(descriptor, typeArguments);
 				}
 
 				case ServiceLifetime.Scoped:
@@ -424,7 +419,9 @@ namespace WebApplication1
 
 				case ServiceLifetime.Transient:
 				{
-					return null;
+					var service = GetMediServiceImpl(this, descriptor, typeArguments);
+					myServiceProvider.TryAddDisposable(service);
+					return service;
 				}
 
 				default: throw new NotSupportedException();
